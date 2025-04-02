@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Count
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from .models import Post, Category, User, Comment
@@ -36,6 +37,8 @@ def post_detail(request, id):
         Post,
         id=id
     )
+    if post.is_published == False and post.author != request.user:
+        raise Http404()
     comments = post.comments.all()
     return render(request, 'blog/detail.html', {'post': post, 'form': CommentForm(), 'comments': comments})
 
@@ -96,15 +99,21 @@ def edit_profile(request):
         return redirect('blog:profile', username=user.username)
     return render(request, 'blog/user.html', {'form': form})
 
-@login_required
+
 def create_or_edit_post(request, post_id=None):
     if post_id is not None:
         instance = get_object_or_404(Post, id=post_id)
+        if request.user != instance.author:
+            return redirect('blog:post_detail', id=post_id)
     else: instance = None
-    form = PostForm(request.POST or None, instance=instance)
+    form = PostForm(request.POST or None, files=request.FILES or None, instance=instance)
     context = {'form': form}
     if form.is_valid():
-        form.save()
+        if not request.user.is_authenticated:
+            raise PermissionDenied()
+        post = form.save(commit=False)
+        post.author = request.user
+        post.save()
         return redirect('blog:profile', request.user.username)
     return render(request, 'blog/create.html', context)
 
@@ -112,11 +121,13 @@ def create_or_edit_post(request, post_id=None):
 @login_required
 def delete_post(request, post_id):
     instance = get_object_or_404(Post, id=post_id)
+    if instance.author != request.user:
+        raise PermissionDenied()
     form = PostForm(instance=instance)
     context = {'form': form}
-    if request.POST:
+    if request.method == 'POST':
         instance.delete()
-        return redirect('blog:profile', request.user.username)
+        return redirect('blog:profile', username=request.user.username)
     return render(request, 'blog/create.html', context)
 
 
@@ -150,12 +161,8 @@ def edit_comment(request, post_id, comment_id):
 
 @login_required
 def delete_comment(request, post_id, comment_id):
-    comment = get_object_or_404(Comment, id=comment_id)
-    post = get_object_or_404(Post, id=post_id)
-    if comment.author != request.user:
-        raise PermissionDenied()
-    if request.POST:
-        post.comments.delete(comment)
+    comment = get_object_or_404(Comment, id=comment_id, post_id=post_id, author=request.user)
+    if request.method == 'POST':
         comment.delete()
         return redirect('blog:post_detail', id=post_id)
     return render(request, 'blog/comment.html', {'comment': comment})
