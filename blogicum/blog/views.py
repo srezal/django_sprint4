@@ -10,13 +10,6 @@ import datetime
 
 
 def index(request):
-    # five_last_posts = Post.objects.filter(
-    #     pub_date__lte=datetime.date.today()
-    # ).filter(
-    #     is_published=True
-    # ).filter(
-    #     category__is_published=True
-    # ).order_by('-pub_date')[:5]
     posts = Post.objects.filter(
         pub_date__lte=datetime.date.today()
     ).filter(
@@ -37,10 +30,16 @@ def post_detail(request, id):
         Post,
         id=id
     )
-    if post.is_published == False and post.author != request.user:
+    if post.is_published is False and post.author != request.user:
         raise Http404()
     comments = post.comments.all()
-    return render(request, 'blog/detail.html', {'post': post, 'form': CommentForm(), 'comments': comments})
+    return render(
+        request,
+        'blog/detail.html',
+        {
+            'post': post, 'form': CommentForm(),
+            'comments': comments
+        })
 
 
 def category_posts(request, category_slug):
@@ -105,8 +104,12 @@ def create_or_edit_post(request, post_id=None):
         instance = get_object_or_404(Post, id=post_id)
         if request.user != instance.author:
             return redirect('blog:post_detail', id=post_id)
-    else: instance = None
-    form = PostForm(request.POST or None, files=request.FILES or None, instance=instance)
+    else:
+        instance = None
+    form = PostForm(
+        request.POST or None,
+        files=request.FILES or None,
+        instance=instance)
     context = {'form': form}
     if form.is_valid():
         if not request.user.is_authenticated:
@@ -141,7 +144,7 @@ def add_comment(request, post_id):
         comment.post = post
         comment.save()
         return redirect('blog:post_detail', id=post.id)
-    
+
 
 @login_required
 def edit_comment(request, post_id, comment_id):
@@ -156,12 +159,19 @@ def edit_comment(request, post_id, comment_id):
         comment.post = post
         comment.save()
         return redirect('blog:post_detail', id=post_id)
-    return render(request, 'blog/comment.html', {'form': form, 'comment': comment})
-    
+    return render(
+        request,
+        'blog/comment.html',
+        {'form': form, 'comment': comment})
+
 
 @login_required
 def delete_comment(request, post_id, comment_id):
-    comment = get_object_or_404(Comment, id=comment_id, post_id=post_id, author=request.user)
+    comment = get_object_or_404(
+        Comment,
+        id=comment_id,
+        post_id=post_id,
+        author=request.user)
     if request.method == 'POST':
         comment.delete()
         return redirect('blog:post_detail', id=post_id)

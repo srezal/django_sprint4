@@ -12,11 +12,11 @@ class PostForm(forms.ModelForm):
             'pub_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'text': forms.Textarea()
         }
-        fields = '__all__' 
+        fields = '__all__'
 
 
 class CommentForm(forms.ModelForm):
-    
+
     class Meta:
         model = Comment
         widgets = {
@@ -29,4 +29,4 @@ class UserChangeForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('username', 'first_name', 'last_name', 'email') 
+        fields = ('username', 'first_name', 'last_name', 'email')
