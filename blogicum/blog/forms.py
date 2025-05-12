@@ -1,5 +1,5 @@
 from django import forms
-# Импортируем класс модели Birthday.
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from .models import Post, Comment, User
 
 
@@ -25,8 +25,23 @@ class CommentForm(forms.ModelForm):
         fields = ('text',)
 
 
-class UserChangeForm(forms.ModelForm):
+class UserFormMixin:
+    model = User
+    fields = (
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+    )
 
-    class Meta:
-        model = User
-        fields = ('username', 'first_name', 'last_name', 'email')
+
+class BlogicumUserCreationForm(UserCreationForm):
+
+    class Meta(UserFormMixin, UserCreationForm.Meta):
+        pass
+
+
+class BlogicumUserChangeForm(UserChangeForm):
+
+    class Meta(UserFormMixin, UserChangeForm.Meta):
+        pass

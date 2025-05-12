@@ -5,7 +5,7 @@ from django.http import Http404
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from .models import Post, Category, User, Comment
-from .forms import PostForm, CommentForm, UserChangeForm
+from .forms import PostForm, CommentForm, BlogicumUserChangeForm
 import datetime
 
 
@@ -86,7 +86,7 @@ def profile(request, username):
 @login_required
 def edit_profile(request):
     instance = get_object_or_404(User, username=request.user.username)
-    form = UserChangeForm(request.POST or None, instance=instance)
+    form = BlogicumUserChangeForm(request.POST or None, instance=instance)
     if form.is_valid():
         user = form.save(commit=False)
         user.last_login = request.user.last_login

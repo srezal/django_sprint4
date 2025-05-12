@@ -7,7 +7,7 @@ class AboutPage(TemplateView):
 
 
 class RulesPage(TemplateView):
-    template_name = 'pages/about.html'
+    template_name = 'pages/rules.html'
 
 
 def permissions_denied(request):
